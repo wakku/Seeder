@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<div data-bb-type="screen" style="background-image:url('images/background.png'); background-color: #181818" data-bb-effect="slide-left" data-bb-scroll-effect="off"> 
+<script type="text/javascript">
+	bb.init({ondomready : function(element, id, params){
+				loadIdeas();
+				//alert(localStorage.getItem("userHash") + " | " + localStorage.getItem("userEmail"));
+				//alert(params.userEmail + " | " + params.userHash);
+		}
+	});
+
+	function onBackgroundCallback() {
+		alert("Going to the background!");
+	}
+	
+	function onBackground() {
+		blackberry.app.event.onBackground(onBackgroundCallback);
+	}
+	
+	//onBackground();
+
+	function sendRequest(url, callback) {
+		var xmlhttp;
+		if (window.XMLHttpRequest){
+			xmlhttp=new XMLHttpRequest();
+		}
+		xmlhttp.onreadystatechange = function(){
+			if (xmlhttp.readyState==4 && xmlhttp.status==200){
+					if (xmlhttp.responseText == "" || JSON.parse(xmlhttp.responseText) == "") {
+						/*document.getElementById('message').innerHTML = "Failure to load ideas. Please check your Internet connection.";
+						document.getElementById('indicator').style.visibility="hidden";
+						document.getElementById('indicator').style.display="none";*/
+					} else {
+						callback(JSON.parse(xmlhttp.responseText));
+					}
+			}
+		}
+		xmlhttp.open("GET",url,true);
+		xmlhttp.send();
+	}
+	
+	function help() {
+		bb.pushScreen('help.html', 'help');
+	}
+	
+	function coins() {
+	   sendRequest("http://seederserver.aws.af.cm/index.php?ideas&command=getVotesByEmail&values[]="+ localStorage.getItem("userEmail"), function (data){
+		   var userCoins = 2;
+		   var message = "You have: " + (userCoins > 1) ? (userCoins + " coins.") : (userCoins + " coin."),
+			   buttonText = "Close",
+			   toastId,
+			   onButtonSelected = function () {
+				  console.log('Button was clicked for toast: ' + toastId);
+			   },
+			   onToastDismissed = function () {
+				  console.log('Toast disappeared: ' + toastId);
+			   },
+			   options = {
+				 buttonText : buttonText,
+				 dissmissCallback : onToastDismissed,
+				 buttonCallback : onButtonSelected,
+				 timeout : 10000
+			   };
+		
+		   toastId = blackberry.ui.toast.show(message, options); 
+	   });
+	}
+	
+	function settings() {
+		localStorage.clear()
+		bb.pushScreen('login.html', 'login');
+	}
+	
+	function seeDetails(idIdea){
+		console.log(idIdea);
+	}
+
+	function allIdeas() {
+		categoryType = 'All';
+		refreshIdeas();
+	}
+	
+	function appIdeas() {
+		categoryType = 'Apps';
+		refreshIdeas();
+	}
+
+	function gameIdeas() {
+		categoryType = 'Games';
+		refreshIdeas();
+	}
+
+	function popularIdeas() {
+		filter = 'votes';
+		refreshIdeas();
+	}
+	
+	function recentIdeas() {
+		filter = 'date';
+		refreshIdeas();
+	}
+	function newIdea() {
+		bb.pushScreen('newIdea.html', 'newIdea');
+	}
+	
+	var filter = 'votes';
+	var categoryType = 'All';
+	var url = "http://seederserver.aws.af.cm/index.php?ideas&command=getAllIdeasByFilter&values[]=votes&values[]=DESC";
+	
+	function refreshIdeas() {
+		
+		if (categoryType == 'All'){
+			url = "http://seederserver.aws.af.cm/index.php?ideas&command=getAllIdeasByFilter&values[]=" + filter + "&values[]=DESC";
+		} else {
+			url = "http://seederserver.aws.af.cm/index.php?ideas&command=getAllIdeasByCategoryType&values[]=" + categoryType + "&values[]=" + filter + "&values[]=DESC";
+		}		
+		var allIdeas = document.getElementById("allIdeasList");
+		allIdeas.innerHTML = "";
+		loadIdeas();
+	}
+	function getDetails (id) {
+		bb.pushScreen('ideaDetails.html', 'ideaDetails', {ideaId:id});
+	}
+	
+	function loadIdeas() {
+		//Default ideas loading options
+		document.getElementById('indicator').style.display="block";
+		sendRequest(url, function (data){
+			var ideas = data[0][0][0];
+			var listItem, dataList, categoryIcon, ideaTitle = document.getElementById('allIdeasList');
+			
+			var ideaList = "";
+			
+			for (var i = 0; i < data.length; i++) {
+				//Ideas reported very often are hidden
+				if ((data[i][0]['reportNumber']) < 10){
+					ideaList += "<div class='idea' onclick='getDetails(" + (data[i][0]['idIdea']) + ")' style='float: left; display: block; clear: both; margin-left: 20px; margin-top: 25px; margin-bottom: 10px; padding: 0px; top: 0px; left: 0px; background-image:url(images/description.png); position:relative; width:709px; height:220px; font-family: 'Slate Pro', Slate,'Myriad Pro',Helvetica;>"
+					+ "<div class='votes' style='position: absolute; top: 165px; left: 21px; text-align: center; width: 120px; font-size:32px; font-style: normal; font-weight: 600; color: #FFFFFF'>" + data[i][0]['votes'] + "</div>"
+					+ "<div class='title' style='position: absolute; top: 20px; left: 170px; font-size:32px; font-style: normal; font-weight: 600; color: #FFFFFF';>" + data[i][0]['title'] + "</div>"
+					+ "<div class='category' style='position: absolute; top: 55px; left: 170px; font-size:18px; font-style: normal; font-weight: 500; color: #888888;'>" + data[i][0]['name'] + "</div>"
+					+ "<div class='description' style='position: absolute; top: 85px; left: 170px; font-size:21px; font-style: normal; font-weight: 400; color: #CCCCCC; width: 440px'>" + (data[i][0]['description']).slice(0,80) + "<span style='color: white;'>...</span></div>"
+					+ "<div><img src='images/category.png' width='135' height='135'  alt='' style='position: absolute; top: 10px; left: 10px'/></div>"
+					+ "<div><img src='images/categories/category-" + (data[i][0]['idCategory']) + ".png' width='81' height='81'  alt='' style='position: absolute; top: 38px; left: 38px'/></div>"
+					+ "<div class='enriched' style='position: absolute; top: 170px; left: 520'><img src='images/icons/enrich.png' width='50' height='50'  alt='' style='position: absolute; left: -350px; top: -10px;'/></div>"
+					+ "<div class='planted' style='position: absolute; top: 170px; left: 520'><img src='images/icons/plant.png' width='50' height='50'  alt='' style='position: absolute; left: -175px; top: -10px;'/></div>"
+					+ "<div class='owned' style='position: absolute; top: 170px; left: 520'><img src='images/icons/owned.png' width='50' height='50'  alt='' style='position: absolute; left: 0px; top: -10px;'/></div>"
+					+ "</div>"					
+				}
+				if (i == (data.length-1)){
+					document.getElementById("allIdeasList").innerHTML = ideaList;
+				}
+			}
+			document.getElementById('indicator').style.display="none";
+		});
+	}
+</script>
+	<div data-bb-type="title" data-bb-caption="Discover new ideas"></div>
+	
+	<!-- App menu -->
+	<div data-bb-type="menu">
+		<div onClick="help();" data-bb-type="menu-item" data-bb-img="images/icons/help.png" data-bb-pin="left">Help</div>
+		<div onClick="coins();" data-bb-type="menu-item" data-bb-img="images/icons/coin-2.png" data-bb-pin="center">Coins</div>
+		<div onClick="settings();" data-bb-type="menu-item" data-bb-img="images/icons/settings.png" data-bb-pin="right">Logout</div>
+	</div>
+	
+	<!-- Action bar -->
+	<div data-bb-type="action-bar"> 
+		
+		<!-- Tabs -->
+		<div onClick="allIdeas();" data-bb-type="action" data-bb-overflow="true" data-bb-style="tab" data-bb-img="images/icons/all.png" data-bb-selected="true">All</div>
+		<div onClick="appIdeas();" data-bb-type="action" data-bb-style="tab" data-bb-overflow="true" data-bb-img="images/icons/apps.png">Apps</div>
+		<div onClick="gameIdeas();" data-bb-type="action" data-bb-style="tab" data-bb-overflow="true" data-bb-img="images/icons/games.png">Games</div>
+		
+		<!-- Actions -->
+		<div onClick="refreshIdeas()" data-bb-type="action" data-bb-style="button" data-bb-img="images/icons/refresh.png">Refresh</div>
+		<!--<div onclick="" data-bb-type="action" data-bb-style="button" data-bb-img="images/icons/search.png">Search</div>-->
+		
+		<!-- Action overflow -->
+		<div onClick="popularIdeas();" data-bb-type="action" data-bb-style="button" data-bb-overflow="true" data-bb-img="images/icons/popular.png">Popular Ideas</div>
+		<div onClick="recentIdeas();" data-bb-type="action" data-bb-style="button" data-bb-overflow="true" data-bb-img="images/icons/recent.png">Recent Ideas</div>
+		<div onClick="newIdea()" data-bb-type="action" data-bb-style="button" data-bb-overflow="true" data-bb-img="images/icons/submit.png">Submit New Idea</div>
+	</div>
+	
+	<!-- Content -->
+	<div id="content">
+	
+		<div id="indicator" data-bb-type="activity-indicator" data-bb-size="medium" style="margin: 0 auto; margin-top: 50%; display:none"></div>
+		<!--<div id="allIdeasList" data-bb-type="image-list" data-bb-image-loading="images/icons/refresh.png"></div>-->
+		<!--<div id="allIdeasList" style="width: 709px; height: 220; position: relative;">
+		</div>-->
+		<div data-bb-type="scroll-panel" style="height:100%">
+			<div id="allIdeasList">
+			</div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<div data-bb-type="screen" style="background-image:url('images/background.png'); background-color: #181818" data-bb-effect="fade" data-bb-scroll-effect="off">
+	<script src="js/sha1.js"></script>
+	<script type="text/javascript">
+	bb.init({
+	  ondomready: function (element, id, params) {
+		if (localStorage.getItem("storedCategories") == null) {
+			localStorage.setItem(1,"Books");
+			localStorage.setItem(2,"Finance");
+			localStorage.setItem(3,"Navigation & Travel");
+			localStorage.setItem(4,"Social");
+			localStorage.setItem(5,"Business");
+			localStorage.setItem(6,"Health & Fitness");
+			localStorage.setItem(7,"News & Magazines");
+			localStorage.setItem(8,"Sports");
+			localStorage.setItem(9,"Education & Reference");
+			localStorage.setItem(10,"Lifestyle");
+			localStorage.setItem(11,"Photo & Video");
+			localStorage.setItem(12,"Utilities");
+			localStorage.setItem(13,"Entertainment");
+			localStorage.setItem(14,"Music & Audio");
+			localStorage.setItem(15,"Productivity");
+			localStorage.setItem(16,"Weather");
+			localStorage.setItem(17,"Other");
+			localStorage.setItem(18,"Action");
+			localStorage.setItem(19,"Children's Games");
+			localStorage.setItem(20,"Space");
+			localStorage.setItem(21,"Arcade");
+			localStorage.setItem(22,"Combat");
+			localStorage.setItem(23,"Sports");
+			localStorage.setItem(24,"Board Games");
+			localStorage.setItem(25,"Movies & TV");
+			localStorage.setItem(26,"Strategy");
+			localStorage.setItem(27,"Cards");
+			localStorage.setItem(28,"Puzzles");
+			localStorage.setItem(28,"Other");
+			localStorage.setItem('storedCategories',"true");
+		}
+		localUserEmail = localStorage.getItem("userEmail");
+		localUserHash = localStorage.getItem("userHash");
+		if (id !='loginPassChanged') {
+			if ((localUserEmail != null) && (localUserHash != null)){
+				document.getElementById('email').value = localUserEmail;
+				document.getElementById('password').value = localUserHash;
+				sendRequest("http://seederserver.aws.af.cm/index.php?users&command=getUserByEmail&values[]="+localUserEmail+"&hash="+localUserHash, function(data){
+					localStorage.setItem('firstName',data[0][0]['firstName']);
+					localStorage.setItem('lastName',data[0][0]['lastName']);
+					localStorage.setItem('isPrivate',data[0][0]['isPrivate']);
+					localStorage.setItem('gender',data[0][0]['gender']);
+					localStorage.setItem('photoURL',data[0][0]['photoURL']);
+					localStorage.setItem('isDeveloper',data[0][0]['isDeveloper']);
+				});
+				url = "http://seederserver.aws.af.cm/index.php?users&command=login&values[]=" + localUserEmail +"&hash=" + localUserHash;
+				sendRequest(url, function(data){
+					bb.pushScreen('all.html', 'allIdeas', {userEmail:localUserEmail, userHash:localUserHash});
+				});
+			}
+		}
+		else {
+			document.getElementById("message").innerHTML = "Password changed successfully";
+			document.getElementById("message").style.display = 'block';
+			document.getElementById("email").value = params.userEmail;
+			document.getElementById("password").focus();
+		}
+	  }
+	});
+	function jump(id){
+		var divid = document.getElementById(id);
+		divid.style.display = 'block';
+		divid.scrollIntoView(true);
+		return false;
+	}
+	function sendRequest(url, callback) {
+		var xmlhttp;
+		if (window.XMLHttpRequest)
+		{
+		  xmlhttp=new XMLHttpRequest();
+		}
+		xmlhttp.onreadystatechange=function(){
+		  if (xmlhttp.readyState==4 && xmlhttp.status==200){
+				if (xmlhttp.responseText == "" || JSON.parse(xmlhttp.responseText) == "" || xmlhttp.responseText == "Invalid user or password"){
+					document.getElementById("message").innerHTML = "Incorrect email or password";
+					document.getElementById('indicator').style.visibility="hidden";
+					document.getElementById('indicator').style.display="none";
+				} else {
+					callback(JSON.parse(xmlhttp.responseText));
+				}
+			}
+		}
+		xmlhttp.open("GET",url,true);
+		xmlhttp.send();
+	}
+	function registerUser(){
+		bb.pushScreen('register.html', 'registerUser');
+	}
+	function forgotPassword(){
+		bb.pushScreen('forgotPassword.html', 'forgotPassword');
+	}
+	function authenticateUser(){
+		document.getElementById('indicator').style.visibility="visible";
+		document.getElementById('indicator').style.display="block";
+		document.getElementById("message").innerHTML = "";
+		var password = document.getElementById("password").value;
+		var email = document.getElementById("email").value;
+		sendRequest("http://seederserver.aws.af.cm/index.php?users&command=getSaltByEmail&values[]=" +email, function (data){
+			var salt = data[0][0][0];
+			var hash = Sha1.hash(password + salt);
+			url = "http://seederserver.aws.af.cm/index.php?users&command=login&values[]=" +email +"&hash=" +hash;
+			sendRequest(url, function(data){
+				localStorage.clear();
+				localStorage.setItem("userEmail", email);
+				localStorage.setItem("userHash", hash);
+				bb.pushScreen('all.html', 'allIdeas', {userEmail:email, userHash:hash});
+			});
+		});
+	}
+	function trim(s) {
+		return s.replace(/^\s*/, "").replace(/\s*$/, "");
+	}
+	function validate() {
+		if (trim(document.getElementById("email").value) == "") {
+			document.getElementById("message").innerHTML = "Login empty";
+			document.getElementById("email").focus();
+			return false;
+		} else if (trim(document.getElementById("password").value) == "") {
+			document.getElementById("message").innerHTML = "Password empty";
+			document.getElementById("password").focus();
+			return false;
+		}
+		else
+			authenticateUser();
+	}
+	</script> 
+	<div data-bb-type="round-panel" width="100%" style="margin: 0 50 0 50;"> 
+		<div style="background-image:url('images/seeder.png'); background-repeat: no-repeat; background-position: bottom; height: 300px; margin: 60px 0 80px 0"></div>
+			<hr style="width:100%; height:1px; border-color: #8A8A8A; border-bottom: 5px; background-color: #181818"/>
+			<div style="margin-bottom:5px;">
+				<input id="email" type="text" placeholder="Email"/>
+			</div>
+			<div style="margin-bottom:30px;">
+				<input id="password" type="password" placeholder="Password"/>
+			</div>
+			<div>
+				<div data-bb-type="button" data-bb-style="stretch" style="margin:0 0 20px 0;" onclick="validate()">Login</div>
+				<div data-bb-type="button" data-bb-style="stretch" style="margin:0 0 20px 0;" onclick="registerUser()">Register</div>
+				<div id = "forgot"><div data-bb-type="button" data-bb-style="stretch" style="margin:0;" onclick="forgotPassword()">Forgot Password</div></div>
+				<div id = "indicator" data-bb-type="activity-indicator" data-bb-size="small" style="display: none; visibility: hidden;"></div>
+				<div id = "message" style="color: white; margin-top: 20px"></div>
+			</div>
+	</div>
+</div>

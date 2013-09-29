@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<div data-bb-type="screen" style="background-image:url('images/backgroundRegister.png'); background-color: #fff" data-bb-effect="slide-left" data-bb-scroll-effect="off">
+	<script src="js/sha1.js"></script>
+	<script type="text/javascript">
+	function enableDevOptions() {
+		if (document.getElementById('developer').getChecked()) {
+			document.getElementById('developerOptions').style.display="block";
+		}
+		else {
+			document.getElementById('developerOptions').style.display="none";
+		}
+	}
+	function hideSpinner() {
+		document.getElementById('indicator').style.display="none";
+		document.getElementById("message").style.display = "none";
+	}
+	function showSpinner() {
+		document.getElementById('indicator').style.display="block";
+		document.getElementById("message").style.display = "block";
+	}
+	function validateEmail(email) { 
+		var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+		return re.test(email);
+	} 
+	function validatePhoto(url) {
+		return(url.match(/\.(jpeg|jpg|gif|png)$/) != null);
+	}
+	function validateWebsite(url) {
+		var re = new RegExp("^(http[s]?:\\/\\/(www\\.)?|ftp:\\/\\/(www\\.)?|www\\.){1}([0-9A-Za-z-\\.@:%_\+~#=]+)+((\\.[a-zA-Z]{2,3})+)(/(.)*)?(\\?(.)*)?");
+		return re.test(url);
+	}
+	function jump(id){
+		var divid = document.getElementById(id);
+		divid.style.display = 'block';
+		divid.scrollIntoView(true);
+		return false;
+	}
+	function trim(s) {
+		return s.replace(/^\s*/, "").replace(/\s*$/, "");
+	}
+	function validate() {
+		if (document.getElementById("developer").checked) {
+			if ((trim(document.getElementById("website").value) != "") && !validateWebsite(document.getElementById("website").value)) {
+				document.getElementById("website").value="";
+				document.getElementById("website").placeholder="Please enter a valid website";
+				document.getElementById("website").focus();
+				return false;
+			} 
+		}
+		if (trim(document.getElementById("firstName").value) == "") {
+			document.getElementById("firstName").placeholder="Please enter your first name";
+			document.getElementById("firstName").focus();
+			return false;
+		} else if (document.getElementById("firstName").value.length > 100) {
+			document.getElementById("firstName").value="";
+			document.getElementById("firstName").placeholder="Your name is too long";
+			document.getElementById("firstName").focus();
+			return false;
+		} else if (trim(document.getElementById("lastName").value) == "") {
+			document.getElementById("lastName").placeholder="Please enter your last name";
+			document.getElementById("lastName").focus();
+			return false;
+		}  else if (document.getElementById("lastName").value.length > 100) {
+			document.getElementById("lastName").placeholder="Your name is too long";
+			document.getElementById("lastName").focus();
+			return false;
+		//Photo can be empty, and default image will be shown
+		}  else if ((trim(document.getElementById("photo").value) != "") && (!validatePhoto(document.getElementById("photo").value))) {
+			document.getElementById("photo").value="";
+			document.getElementById("photo").placeholder="Please enter a proper image URL";
+			document.getElementById("photo").focus();
+			return false;
+		} else if (trim(document.getElementById("email").value) == "") {
+			document.getElementById("email").placeholder="Please enter your email";
+			document.getElementById("email").focus();
+			return false;
+		} else if (!validateEmail(document.getElementById("email").value)) {
+			document.getElementById("email").value="";
+			document.getElementById("email").placeholder="Please enter a proper email";
+			document.getElementById("email").focus();
+			return false;
+		} else if (document.getElementById("email").value.length > 100) {
+			document.getElementById("email").value="";
+			document.getElementById("email").placeholder="Your email is too long";
+			document.getElementById("email").focus();
+			return false;
+		} else if (trim(document.getElementById("password").value) == "") {
+			document.getElementById("password").placeholder="Please enter your password";
+			document.getElementById("password").focus();
+			return false;
+		} else if (document.getElementById("password").value.length < 6) {
+			document.getElementById("password").value="";
+			document.getElementById("password").placeholder="Your password is too short";
+			document.getElementById("password").focus();
+			return false;
+		} else if (trim(document.getElementById("password2").value) == "") {
+			document.getElementById("password2").placeholder="Please enter your password again";
+			document.getElementById("password2").focus();
+			return false;
+		} else if (document.getElementById("password").value != document.getElementById("password2").value) {
+			document.getElementById("password2").value="";
+			document.getElementById("password2").placeholder="Please enter the same password";
+			document.getElementById("password2").focus();
+			return false;
+		}
+		else {
+			showSpinner();
+			jump('message');
+			registerUser();
+		}
+	}
+	function sendRequest(url, callback) {
+		var xmlhttp;
+		if (window.XMLHttpRequest)
+		{
+		  xmlhttp=new XMLHttpRequest();
+		}
+		xmlhttp.onreadystatechange=function(){
+		  if (xmlhttp.readyState==4 && xmlhttp.status==200)
+			{
+				if (xmlhttp.responseText == "User already exists" || JSON.parse(xmlhttp.responseText) == "") {
+					hideSpinner();
+					document.getElementById("email").value="";
+					jump('email');
+					document.getElementById("email").placeholder="Email already exists";
+					document.getElementById("email").focus();
+				}
+				else{
+					callback(JSON.parse(xmlhttp.responseText));}
+			}
+		}
+		xmlhttp.open("GET",url,true);
+		xmlhttp.send();
+	}
+	function registerUser() {
+		var firstName = document.getElementById("firstName").value;
+		var lastName = document.getElementById("lastName").value;
+		var photo = (trim(document.getElementById("photo").value) != "") ? document.getElementById("photo").value : ((document.getElementById("developer").checked) ? "images/icons/developer.png" : "images/icons/user.png");
+		var radioButtons = document.getElementsByName("group1");
+		var gender = "other";
+		for (var x = 0; x < radioButtons.length; x ++) {
+			if(radioButtons[x].checked)
+				gender = radioButtons[x].value;
+		}
+		var email = document.getElementById("email").value;
+		var password = document.getElementById("password").value;
+		var isPrivate = !document.getElementById("privacy").checked;
+		if (isPrivate)
+			isPrivate = 1;
+		else
+			isPrivate = 0;
+		var salt = Sha1.hash(Math.random().toString());
+		var hash = Sha1.hash(password + salt);
+		
+		var isDeveloper = document.getElementById("developer").checked;
+		localStorage.setItem('firstName',firstName);
+		localStorage.setItem('lastName',lastName);
+		localStorage.setItem('photoURL',photo);
+		localStorage.setItem('isPrivate',isPrivate);
+		localStorage.setItem('gender',gender);
+		localStorage.setItem('isDeveloper',isDeveloper);
+		if (isDeveloper) {
+			document.getElementById('indicator').style.display="block";
+			document.getElementById("message").style.display = "block";
+			var vendor = document.getElementById("vendor").value;
+			var website = document.getElementById("website").value;
+			var twitter = document.getElementById("twitter").value;
+			var facebook = document.getElementById("facebook").value;
+			var linkedin = document.getElementById("linkedin").value;
+			var github = document.getElementById("github").value;
+			sendRequest("http://seederserver.aws.af.cm/index.php?users&command=addDeveloper&values[]="+email+"&values[]="+firstName+"&values[]="+lastName+"&values[]="+gender+"&values[]="+salt+"&values[]="+hash+"&values[]="+photo+"&values[]="+isPrivate+"&values[]="+vendor+"&values[]="+website+"&values[]="+twitter+"&values[]="+facebook+"&values[]="+linkedin+"&values[]="+github, function (data){
+				bb.pushScreen('all.html', 'allIdeas');
+			});
+		}
+		else {
+			document.getElementById('indicator').style.display="block";
+			document.getElementById("message").style.display = "block";
+			sendRequest("http://seederserver.aws.af.cm/index.php?users&command=addUser&values[]="+email+"&values[]="+firstName+"&values[]="+lastName+"&values[]="+gender+"&values[]="+salt+"&values[]="+hash+"&values[]=www.google.com&values[]="+isPrivate, function (data){
+				bb.pushScreen('all.html', 'allIdeas');
+			});
+		}	
+	}
+	</script>
+	<div data-bb-type="title" data-bb-caption="Register Your Account"></div>
+	<div data-bb-type="action-bar" data-bb-back-caption ="Back"></div>
+		<div data-bb-type="round-panel"> 
+			<div data-bb-type="panel-header">Personal Info</div>
+			<div data-bb-type="label-control-container">
+				<div data-bb-type="row">
+					<div data-bb-type="label">First Name:</div>
+					<input id="firstName" type="text"/>
+				</div>
+				<div data-bb-type="row">
+					<div data-bb-type="label">Last Name:</div>
+					<input id="lastName" type="text"/>
+				</div>
+				<div style="margin:15px 0 35px 0;">
+					<table>
+						<tr>
+							<td class="cell" >
+								<input type="radio" name="group1" id="control1" checked="true" value="male"/>
+							</td>
+							<td class="cell" style="font-size: 45px; padding-top:7px;">Male</td>
+						</tr>
+						<tr>
+							<td class="cell">
+								<input type="radio" name="group1" id="control2" value="female"/>
+							</td>
+							<td class="cell" style="font-size: 45px; padding-top:7px;">Female</td>
+						</tr>
+					</table>
+				</div>
+				<div data-bb-type="row">
+					<div data-bb-type="label">Photo URL:</div>
+					<input id="photo" type="text"/>
+				</div>
+			</div>
+			<div data-bb-type="panel-header">Privacy Setting</div>
+			<div data-bb-type="label-control-container">
+			<div style="margin:15px 0 35px 0;">
+				<table>
+					<tr>
+						<td class="cell">
+							<input id="privacy" type="checkbox" value="private"/>
+						</td>
+						<td class="cell" style="font-size: 45px; padding-top:7px;">Share personal info with other users?</td>
+					</tr>
+				</table>
+			</div>
+			</div>
+			<div data-bb-type="panel-header">Account Info</div>
+			<div data-bb-type="label-control-container" style="margin:15px 0 35px 0;">
+				<div data-bb-type="row">
+					<div data-bb-type="label">Email:</div>
+					<input id="email" type="email"/>
+				</div>
+				<div data-bb-type="row">
+					<div data-bb-type="label">Password:</div>
+					<input id="password" type="password"/>
+				</div>
+				<div data-bb-type="row">
+					<div data-bb-type="label">Re-enter password:</div>
+					<input id="password2" type="password"/>
+				</div>
+			</div>
+			<div data-bb-type="panel-header">Developer Settings</div>
+			<div data-bb-type="label-control-container">
+				<div style="margin:15px 0 0 0;">
+					<table>
+						<tr>
+							<td class="cell">
+								<input id="developer" type="checkbox" value="developer" onchange="enableDevOptions()"/>
+							</td>
+							<td class="cell" style="font-size: 45px; padding-top:7px;">I'm a developer</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+			<div id="developerOptions" style="display:none" data-bb-type="label-control-container">
+				<div id="ele1" data-bb-type="row">
+					<div id="vendorLabel" data-bb-type="label">Blackberry Vendor Id:</div>
+					<input id="vendor" type="text" placeholder="Optional"/>
+				</div>
+				<div id="ele2" style="display:none" data-bb-type="row">
+					<div data-bb-type="label">Website:</div>
+					<input id="website" type="text" placeholder="Optional"/>
+				</div>
+				<div id="ele3" style="display:none" data-bb-type="row">
+					<div data-bb-type="label">Twitter:</div>
+					<input id="twitter" type="text" placeholder="Optional"/>
+				</div>
+				<div id="ele4" style="display:none" data-bb-type="row">
+					<div data-bb-type="label">Facebook:</div>
+					<input id="facebook" type="text" placeholder="Optional"/>
+				</div>
+				<div id="ele5" style="display:none" data-bb-type="row">
+					<div data-bb-type="label">LinkedIn:</div>
+					<input id="linkedin" type="text" placeholder="Optional"/>
+				</div>
+				<div id="ele6" style="display:none" data-bb-type="row">
+					<div data-bb-type="label">GitHub:</div>
+					<input id="github" type="text" placeholder="Optional"/>
+				</div>
+			</div>
+			<div data-bb-type="button" data-bb-style="stretch" onclick="validate()">Submit</div>
+			<div style="position:relative;">
+				<div id = "indicator" data-bb-type="activity-indicator" data-bb-size="small" style="position:absolute; top:0; left: 12px; display: none; "></div>
+				<div id="message" style="display: none; position: absolute; top:7px; left: 70px;">Creating your account...</div>
+			</div>
+		</div>
+</div>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" 
+    xmlns:rim="http://www.blackberry.com/ns/widgets"
+    version="1.0.0.0" id="SeederApp">
+	
+	<!-- App Title -->
+	<name>Seeder</name>
+	
+	<!-- Author Information -->
+	<author rim:copyright="Copyright 2013 Seeder"
+			href="http://www.ystallonne.com/seeder"
+			email="seederapp@gmail.com">Andreza Rego, Robert Stanica, and Ystallonne Alves</author>
+	
+	<!-- App Description -->
+	<description xml:lang="en">A social networking platform for BlackBerry users and developers.</description>
+	
+	<!-- App Icon -->
+	<!-- Z10 and Q10 (86px) -->
+	<icon src="images/icon.png"/>
+	<!-- Playbook (150px) <icon src="images/icon-150.png"/> -->
+	
+	<!-- Splash Screen -->
+	<!-- Z10 -->
+	<rim:splash src="images/splash-1280x768.png"/>
+	<!-- Q10 -->
+	<rim:splash src="images/splash-720x720.png"/>
+	
+	<!-- Initial Screen -->
+	<content src="index.html"/>
+	
+	<!-- Access to external URL -->
+	<access uri="http://seederserver.aws.af.cm/" subdomains="true">
+		<feature id="blackberry.app" version="1.0.0.0" required="true"/>
+		<feature id="blackberry.invoke" version="1.0.0.0" required="true"/>
+	</access>
+	
+	<!-- API Access --> 
+	<!-- Essential -->
+	<feature id="blackberry.system.event"/>
+	<feature id="blackberry.app" >
+		<param name="websecurity" value="disable"/>
+		<param name="orientation" value="portrait"/>
+	</feature>
+	<feature id="blackberry.app.event"/>
+	<feature id="blackberry.ui.contextmenu"/>
+	<feature id="blackberry.ui.cover"/>
+	<feature id="blackberry.ui.dialog"/>
+	<feature id="blackberry.ui.toast"/>
+	<!-- Extra -->
+	<feature id="blackberry.bbm.platform"/>
+	<feature id="blackberry.invoke"/>
+	<feature id="blackberry.invoke.card"/>
+	
+	<!-- License Documentation --> 
+	<license href="http://www.ystallonne.com/seeder/license.html"/>
+</widget>

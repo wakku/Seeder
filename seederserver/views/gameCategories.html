@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Seeder | Show all games</title>
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script>
+$.getJSON("http://seederserver.aws.af.cm/index.php?ideas&command=getAllGames", function(result){
+
+	var arrayOfObjects = result;
+	
+	$("body").append("<select id='games'></select>");
+	
+	for (var i = 0; i < arrayOfObjects.length; i++) {
+		var object = arrayOfObjects[i];
+		$('#games').append($('<option>', {
+			value: JSON.stringify(object[0].idCategory),
+			text: JSON.stringify(object[0].name).replace(/["]/g, "")
+		}));
+	}
+});
+</script>
+</head>
+<body>
+</body>
+</html>

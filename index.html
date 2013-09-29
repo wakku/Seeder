@@ -1,0 +1,18 @@
+ <html>
+      <head>
+          <link  rel="stylesheet" type="text/css" href="css/bbui.css"></link>
+          <script type="text/javascript" src="js/bbui.js"></script>
+          <script type="text/javascript" src="local:///chrome/webworks.js"></script>
+          <script type="text/javascript">
+          window.addEventListener('load',function() {
+              document.addEventListener('webworksready', function(e) {
+                  bb.init({controlsDark: true});
+                  // Open our first screen
+                  bb.pushScreen('login.html', 'login');
+              }, false);
+          }, false);
+          </script>
+      </head>
+      <body>
+      </body>
+  </html>
